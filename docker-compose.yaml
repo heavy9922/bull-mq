@@ -1,0 +1,36 @@
+services:
+  redis-master:
+    image: redis:7.0-alpine
+    container_name: redis-master
+    command: ["redis-server", "--appendonly", "yes", "--save", "60", "1"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-master-data:/data
+    networks:
+      - redis-network
+
+  redis-slave:
+    image: redis:7.0-alpine
+    container_name: redis-slave
+    command: ["redis-server", "--slaveof", "redis-master", "6379"]
+    networks:
+      - redis-network
+
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: redis-commander
+    environment:
+      - REDIS_HOSTS=local:redis-master:6379
+    ports:
+      - "8081:8081"
+    networks:
+      - redis-network
+
+networks:
+  redis-network:
+    driver: bridge
+
+volumes:
+  redis-master-data:
+    driver: local
